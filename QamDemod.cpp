@@ -26,7 +26,7 @@ std::vector<std::string>QamDemod :: demodulate(std::vector<double> modulated, st
 
     for (int i = 0; i < modulated.size(); i++) {
         double real = 2.0 * modulated[i] * cos(2 * PI * ts[i] * fc);
-        double imag = -2.0 * modulated[i] * sin(2 * PI * ts[i] * fc);
+        double imag = 2.0 * modulated[i] * sin(2 * PI * ts[i] * fc);
         I_demod.push_back(real);
         Q_demod.push_back(imag);
     }
@@ -54,8 +54,21 @@ std::vector<std::string>QamDemod :: demodulate(std::vector<double> modulated, st
         std::string bits;
         switch (M) {
             case 4: {
-                bits += (I_sym[i] >= 0.0) ? '1' : '0';
-                bits += (Q_sym[i] >= 0.0) ? '1' : '0';
+                double I_lvl = I_sym[i] * sqrt(2.0);
+                double Q_lvl = Q_sym[i] * sqrt(2.0);
+
+                int I_idx = round((I_lvl + 1) / 2.0);
+                int Q_idx = round((Q_lvl + 1) / 2.0);
+
+                I_idx = std::max(0, std::min(1, I_idx));
+                Q_idx = std::max(0, std::min(1, Q_idx));
+
+                const std::vector<std::string> gray_code_4 = { "0", "1" };
+
+                std::string I_bits = gray_code_4[I_idx];
+                std::string Q_bits = gray_code_4[Q_idx];
+
+                bits = I_bits + Q_bits;
                 break;
             }
             case 16: {
@@ -99,5 +112,4 @@ std::vector<std::string>QamDemod :: demodulate(std::vector<double> modulated, st
         result.push_back(bits);
     }
     return result;
-
 }
