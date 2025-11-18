@@ -81,7 +81,7 @@ void QamMod::modulate(std::vector<std::string> data) {
 
     for (size_t i = 0; i < I_rep.size(); i++) {
         real = I_rep[i] * cos(2 * PI * fc * ts[i]);
-        imag = -Q_rep[i] * sin(2 * PI * fc * ts[i]);
+        imag = Q_rep[i] * sin(2 * PI * fc * ts[i]);
         s_t.push_back(real + imag);
     }
 }
