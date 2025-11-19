@@ -1,18 +1,11 @@
-﻿// QamDemod.cpp
-#include "QamDemod.h"
-#include <iostream>
+﻿#include "QamDemod.h"
 #include <vector>
 #include <string>
 #include <cmath>
-#include <stdexcept>
 
 #define PI 3.1415926535
 
-QamDemod::QamDemod(double fs, double fc, int M, int sps)
-    : fs(fs), fc(fc), M(M), sps(sps) {
-    if (M != 4 && M != 16 && M != 64)
-        throw std::invalid_argument("M must be 4, 16 or 64");
-}
+QamDemod::QamDemod(double fs, double fc, int M, int sps) : fs(fs), fc(fc), M(M), sps(sps) {}
 
 std::vector<std::string>QamDemod :: demodulate(std::vector<double> modulated, std::vector<double> ts) {
 
@@ -48,6 +41,17 @@ std::vector<std::string>QamDemod :: demodulate(std::vector<double> modulated, st
         Q_sym.push_back(Q_avg);
     }
 
+    double Es_est = 0.0;
+    for (int k = 0; k < I_sym.size(); k++) {
+        Es_est += I_sym[k] * I_sym[k] + Q_sym[k] * Q_sym[k];
+    }
+    Es_est /= I_sym.size();
+    double scale = (Es_est > 1e-12) ? 1.0 / std::sqrt(Es_est) : 1.0;
+    for (int k = 0; k < I_sym.size(); k++) {
+        I_sym[k] *= scale;
+        Q_sym[k] *= scale;
+    }
+
     std::vector<std::string> result;
     result.reserve(I_sym.size());
     for (int i = 0; i < I_sym.size(); i++) {
@@ -63,7 +67,7 @@ std::vector<std::string>QamDemod :: demodulate(std::vector<double> modulated, st
                 I_idx = std::max(0, std::min(1, I_idx));
                 Q_idx = std::max(0, std::min(1, Q_idx));
 
-                const std::vector<std::string> gray_code_4 = { "0", "1" };
+                const std::vector<std::string> gray_code_4 = { "0", "1" }; 
 
                 std::string I_bits = gray_code_4[I_idx];
                 std::string Q_bits = gray_code_4[Q_idx];

@@ -1,7 +1,6 @@
 #include "AWGN.h"
 #include <random>
 #include <vector>
-#include <stdexcept>
 
 AWGN::AWGN(double mean, double stddev) : mean(mean), stddev(stddev){
 	std::random_device rd;

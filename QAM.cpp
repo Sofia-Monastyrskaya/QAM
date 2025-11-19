@@ -1,10 +1,10 @@
 ﻿#include <iostream>
 #include <vector>
 #include <string>
-#include <cmath>
 #include <fstream>
 #include <ctime>
 #include <cstdlib>
+#include <complex>
 #include "QamMod.h"
 #include "AWGN.h"
 #include "QamDemod.h"
@@ -27,11 +27,11 @@ double calculateBER(const std::vector<std::string>& original, const std::vector<
     int total_bits = 0;
     int error_bits = 0;
 
-    for (size_t i = 0; i < original.size(); i++) {
+    for (int i = 0; i < original.size(); i++) {
         if (i >= received.size() || original[i].length() != received[i].length()) {
             continue;
         }
-        for (size_t j = 0; j < original[i].length(); j++) {
+        for (int j = 0; j < original[i].length(); j++) {
             total_bits++;
             if (original[i][j] != received[i][j]) {
                 error_bits++;
@@ -51,11 +51,11 @@ int main() {
 
     int fs = 2000000;
     int fc = 200000;
-    int sps = 100;
-    int num_symbols = 500000;
-    const int num_experiments = 1;
+    int sps = 20;
+    int num_symbols = 50000;
+    const int num_experiments = 10;
 
-    std::vector<double> snr_db_values = {0, /*1, 2, 3, 4,*/ 5, /*6, 7, 8, 9,*/ 10, /*11, 12, 13, 14,*/ 15, /*16, 17, 18, 19,*/ 20, /*21, 22, 23, 24,*/ 25};
+    std::vector<double> snr_db_values = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<int> modulation_types = { 4, 16, 64 };
     std::vector<int> bits_per_symbols = { 2, 4, 6 };
 
@@ -91,27 +91,28 @@ int main() {
             int total_errors = 0;
             int total_bits = 0;
 
-            QamMod qam(fs, fc, M, sps);
-
             for (int exp = 0; exp < num_experiments; exp++) {
                 auto original_bits = generateRandomBits(num_symbols, bps);
 
+                QamMod qam(fs, fc, M, sps);
                 qam.modulate(original_bits);
                 double total_energy = 0.0;
-                for (const auto& s : qam.s_t)
+                for (const auto& s : qam.s_t) {
                     total_energy += std::norm(s);
+                }
 
                 double Es = total_energy / num_symbols;
 
                 if (Es > 0) {
                     double scale = std::sqrt(1.0 / Es);
-                    for (auto& s : qam.s_t)
+                    for (auto& s : qam.s_t) {
                         s *= scale;
+                    }
                 }
 
-                double snr_linear = std::pow(10.0, snr_db / 10.0);
-                double noise_variance = 1.0 / (2.0 * snr_linear);
-                double sigma = std::sqrt(noise_variance);
+                double k = std::log2(M);
+                double EbN0_linear = std::pow(10.0, snr_db / 10.0);
+                double sigma = std::sqrt(1.0 / (2.0 * k * EbN0_linear));
 
                 AWGN awgn(0.0, sigma);
                 auto noisy_signal = qam.s_t;
@@ -121,8 +122,8 @@ int main() {
                 auto demod_bits = demod.demodulate(noisy_signal, qam.ts);
 
                 long long current_errors = 0;
-                for (size_t i = 0; i < original_bits.size() && i < demod_bits.size(); ++i) {
-                    for (size_t j = 0; j < original_bits[i].size() && j < demod_bits[i].size(); ++j) {
+                for (int i = 0; i < original_bits.size() && i < demod_bits.size(); ++i) {
+                    for (int j = 0; j < original_bits[i].size() && j < demod_bits[i].size(); ++j) {
                         if (original_bits[i][j] != demod_bits[i][j])
                             current_errors++;
                     }
@@ -138,9 +139,6 @@ int main() {
 
             double average_ber = static_cast<double>(total_errors) / total_bits;
 
-            std::cout << "QAM-" << M << ", SNR = " << snr_db << " dB, FINAL BER = " << average_ber
-                << " (Total Errors: " << total_errors << " out of " << total_bits << " bits)" << std::endl;
-            // Используйте:
             if (average_ber == 0.0) {
                 *output_file << snr_db << " " << 1e-8 << std::endl;
             }
@@ -151,6 +149,7 @@ int main() {
         std::cout << std::endl;
     }
 
+    //gnuplot
     file_qam4.close();
     file_qam16.close();
     file_qam64.close();
@@ -166,6 +165,4 @@ int main() {
         "'qam64_ber.txt' using 1:2 w lp lw 2 pt 7 ps 1 title '64-QAM'\"";
 
     system(gnuplot_cmd.c_str());
-
-    return 0;
 }

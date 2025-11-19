@@ -3,7 +3,7 @@
 #include <fstream>
 #include <stdexcept> 
 
-#define PI 3.141592
+#define PI 3.1415926535
 
 QamMod::QamMod(int fs, int fc, int M, int sps) 
     : fs(fs), fc(fc), M(M), sps(sps), I(0.0), Q(0.0), real(0.0), imag(0.0) {
@@ -64,7 +64,7 @@ void QamMod::modulate(std::vector<std::string> data) {
         Q_symbols.push_back(Q);
     }
 
-    for (size_t i = 0; i < I_symbols.size(); i++) {
+    for (int i = 0; i < I_symbols.size(); i++) {
         double I_val = I_symbols[i];
         double Q_val = Q_symbols[i];
         for (int j = 0; j < sps; j++) {
@@ -75,11 +75,11 @@ void QamMod::modulate(std::vector<std::string> data) {
 
     ts.clear();
     ts.resize(I_rep.size());
-    for (size_t i = 0; i < ts.size(); i++) {
+    for (int i = 0; i < ts.size(); i++) {
         ts[i] = i / double(fs);
     }
 
-    for (size_t i = 0; i < I_rep.size(); i++) {
+    for (int i = 0; i < I_rep.size(); i++) {
         real = I_rep[i] * cos(2 * PI * fc * ts[i]);
         imag = Q_rep[i] * sin(2 * PI * fc * ts[i]);
         s_t.push_back(real + imag);
